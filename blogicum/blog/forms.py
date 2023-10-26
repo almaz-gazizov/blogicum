@@ -21,14 +21,12 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = '__all__'
         widgets = {
             'pub_date': forms.DateTimeInput(
-                attrs={'type': 'datetime-local', 'class': 'form-control'}
-            ),
-            'comment': forms.Textarea(attrs={'rows': '20', 'col': '40'})
+                attrs={'type': 'datetime-local'}
+            )
         }
-        exclude = ('author', 'is_published',)
+        exclude = ('author',)
 
 
 class CommentForm(forms.ModelForm):

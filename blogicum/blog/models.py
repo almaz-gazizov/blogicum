@@ -16,6 +16,9 @@ class PublishCreateModel(models.Model):
         auto_now_add=True
     )
 
+    def __str__(self):
+        return f'{self.is_published} {self.created_at}'
+
     class Meta:
         abstract = True
 
@@ -26,6 +29,7 @@ class Category(PublishCreateModel):
     slug = models.SlugField(
         'Идентификатор',
         unique=True,
+        max_length=256,
         help_text=(
             'Идентификатор страницы для URL; '
             'разрешены символы латиницы, цифры, дефис и подчёркивание.'
@@ -37,7 +41,7 @@ class Category(PublishCreateModel):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title[:80]
+        return f'{self.title[:10]} {self.description} {self.slug}'
 
 
 class Location(PublishCreateModel):
@@ -48,7 +52,7 @@ class Location(PublishCreateModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.name[:80]
+        return f'{self.name[:10]}'
 
 
 class Post(PublishCreateModel):
@@ -90,7 +94,16 @@ class Post(PublishCreateModel):
         ordering = ('-pub_date',)
 
     def __str__(self):
-        return self.title[:80]
+        return f'''
+            {super().__str__()}
+            {self.title[:10]}
+            {self.text[:15]}
+            {self.pub_date}
+            {self.author}
+            {self.location}
+            {self.category}
+            {self.image}
+        '''
 
     def get_absolute_url(self):
         return reverse('blog:detail', kwargs={'pk': self.pk})
@@ -103,8 +116,14 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
         ordering = ('created_at',)
