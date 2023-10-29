@@ -18,13 +18,13 @@ from .models import Post, Category, Comment, User
 NUMBER_OF_POSTS = 10
 
 
-def output_published(queryset, is_author=True):
+def output_published(queryset, skip_filter=True):
     queryset = queryset.select_related(
         'category', 'location', 'author'
     ).annotate(
         comment_count=Count('comments')
     ).order_by('-pub_date')
-    if is_author is not True:
+    if not skip_filter:
         return queryset.filter(
             is_published=True,
             category__is_published=True,
@@ -104,7 +104,7 @@ class PostUpdateView(PostDispatchMixin, UpdateView):
     def get_success_url(self):
         return reverse(
             'blog:post_detail',
-            args=[self.kwargs['post_id']]
+            args=[self.kwargs[self.pk_url_kwarg]]
         )
 
 
@@ -177,7 +177,7 @@ class IndexListView(ListView):
     paginate_by = NUMBER_OF_POSTS
 
     def get_queryset(self):
-        return output_published(Post.objects.all(), is_author=False)
+        return output_published(Post.objects.all(), skip_filter=False)
 
 
 class PostDetailView(DetailView):
@@ -193,24 +193,12 @@ class PostDetailView(DetailView):
         )
 
     def get_queryset(self):
-        if self.request.user != get_object_or_404(
-            Post, pk=self.kwargs[self.pk_url_kwarg]
-        ).author:
-            return output_published(
-                Post.objects.all(),
-                is_author=False
-            ).prefetch_related('comments')
         return output_published(
-            Post.objects.all()
+            Post.objects.all(),
+            not self.request.user != get_object_or_404(
+                Post, pk=self.kwargs[self.pk_url_kwarg]
+            ).author
         ).prefetch_related('comments')
-
-
-def category_settings(slug):
-    return get_object_or_404(
-        Category,
-        slug=slug,
-        is_published=True
-    )
 
 
 class CategoryListView(ListView):
@@ -232,5 +220,7 @@ class CategoryListView(ListView):
         )
 
     def get_queryset(self):
-        category = self.get_category()
-        return output_published(category.posts.all(), is_author=False)
+        return output_published(
+            self.get_category().posts.all(),
+            skip_filter=False
+        )
