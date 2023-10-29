@@ -16,11 +16,11 @@ class PublishCreateModel(models.Model):
         auto_now_add=True
     )
 
-    def __str__(self):
-        return f'{self.is_published} {self.created_at}'
-
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return f'{self.is_published} {self.created_at}'
 
 
 class Category(PublishCreateModel):
@@ -41,7 +41,10 @@ class Category(PublishCreateModel):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return f'{self.title[:10]} {self.description} {self.slug}'
+        return (
+            f'{self.title[:10]} {self.description[:15]} {self.slug}'
+            f'{super().__str__()}'
+        )
 
 
 class Location(PublishCreateModel):
@@ -52,7 +55,7 @@ class Location(PublishCreateModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return f'{self.name[:10]}'
+        return f'{self.name[:10]} {super().__str__()}'
 
 
 class Post(PublishCreateModel):
@@ -94,16 +97,11 @@ class Post(PublishCreateModel):
         ordering = ('-pub_date',)
 
     def __str__(self):
-        return f'''
-            {super().__str__()}
-            {self.title[:10]}
-            {self.text[:15]}
-            {self.pub_date}
-            {self.author}
-            {self.location}
-            {self.category}
-            {self.image}
-        '''
+        return (
+            f'{self.title[:10]} {self.text[:15]} {self.pub_date}'
+            f'{self.author} {self.location} {self.category}'
+            f'{self.image} {super().__str__()}'
+        )
 
     def get_absolute_url(self):
         return reverse('blog:detail', kwargs={'pk': self.pk})
